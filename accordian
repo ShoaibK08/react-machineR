@@ -1,0 +1,79 @@
+import React, { useState } from "react";
+import "./accordion.css";
+
+const Accordion = ({ items }) => {
+  const [activeId, setActiveId] = useState(null);
+
+  const toggle = (id) => {
+    setActiveId((prev) => (prev === id ? null : id));
+  };
+
+  return (
+    <div className="accordion">
+      {items.map((item) => (
+        <div key={item.id} className="accordion-item">
+          
+          <div
+            className="accordion-title"
+            onClick={() => toggle(item.id)}
+          >
+            {item.title}
+          </div>
+
+          {activeId === item.id && (
+            <div className="accordion-content">
+              {item.content}
+            </div>
+          )}
+
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default Accordion;
+
+.accordion {
+  width: 400px;
+}
+
+.accordion-item {
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.accordion-title {
+  padding: 10px;
+  cursor: pointer;
+  background: #f5f5f5;
+  font-weight: bold;
+}
+
+.accordion-content {
+  padding: 10px;
+  background: #fff;
+}
+
+
+import React from "react";
+import Accordion from "./Accordion";
+
+function App() {
+  const data = [
+    { id: 1, title: "Section 1", content: "Content 1" },
+    { id: 2, title: "Section 2", content: "Content 2" },
+    { id: 3, title: "Section 3", content: "Content 3" },
+  ];
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Accordion Example</h1>
+
+      <Accordion items={data} />
+    </div>
+  );
+}
+
+export default App;
