@@ -1,0 +1,264 @@
+app.jsx code :- 
+  
+  import { useState } from "react";
+import { useSelector,useDispatch } from "react-redux";
+import { addUser,updateUser,deleteUser } from "./Features/userSlice";
+import useDebounce from "./useDebounce";
+
+function App() {
+ 
+const dispatch = useDispatch();
+  const users = useSelector((state)=>state.users)
+
+  const [editID, setEditId] = useState(null)
+
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500)
+
+  const [formData, setFormData] = useState([{
+    name: '',
+    address: '',
+    age: ''
+  }])
+
+  const handleChange = (index, e) => {
+    const updatedForm = [...formData]
+    updatedForm[index][e.target.name] = e.target.value
+    setFormData(updatedForm)
+  }
+
+  const handleAddMore = () => {
+    setFormData([
+      ...formData,
+      { name: '', address: '', age: '' }
+    ])
+  }
+
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (editID) {
+      dispatch(updateUser({id:editID,data:formData[0]}))
+      setEditId(null)
+    }
+    else {
+     formData.forEach((user)=>  dispatch(addUser(user)))
+    }
+
+    setFormData([{
+      name: '',
+      address: '',
+      age: ''
+    }])
+  }
+
+
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    user.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    user.age.toString().includes(debouncedSearchTerm)
+  );
+
+
+
+  return (
+    <>
+      <div>
+        <form className="max-w-sm mx-auto mt-6" onSubmit={handleSubmit}>
+
+          {formData.map((item, index) => {
+            return (
+
+              <div key={index}>
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your name</label>
+                  <input type="text" name="name" value={item.name} onChange={(e) => handleChange(index, e)} id={`name-${index}`} className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="enter name" required />
+                </div>
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your Address</label>
+                  <input type="text" name="address" value={item.address} onChange={(e) => handleChange(index, e)} id={`address-${index}`}className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="address" required />
+                </div>
+
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your age</label>
+                  <input type="number" name="age" value={item.age} onChange={(e) => handleChange(index, e)} id={`age-${index}`}className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Enter age" required />
+                </div>
+              </div>
+
+            ) 
+          })}
+
+          <button
+            type="button"
+            className="bg-gray-600 text-white px-4 py-2 rounded"
+            onClick={handleAddMore}
+          >
+            + Add More
+          </button>
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">{editID ? "Update" : "Submit"}</button>
+        </form>
+      </div>
+
+
+      <input
+        type="text"
+        id="visitors"
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 my-4"
+        placeholder="enter your Search"
+        value={searchTerm}
+        onChange={handleSearch}
+      />
+
+
+
+      <div className="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+        <table className="w-full text-sm text-left rtl:text-right text-body">
+          <thead className="bg-neutral-secondary-soft border-b border-default">
+            <tr>
+              <th scope="col" className="px-6 py-3 font-medium">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3 font-medium">
+                Address
+              </th>
+              <th scope="col" className="px-6 py-3 font-medium">
+                Age
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.map((user) => (
+              <tr className="odd:bg-neutral-primary even:bg-neutral-secondary-soft" key={user.id}>
+                <th scope="row" className="px-6 py-4 font-medium text-heading whitespace-nowrap">
+                  {user.name}
+                </th>
+                <td className="px-6 py-4">
+                  {user.address}
+                </td>
+                <td className="px-6 py-4">
+                  {user.age}
+                </td>
+
+                <td className="px-6 py-4">
+                  <button type="button" className="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" onClick={() => {
+                    setEditId(user.id)
+                    setFormData([{
+                      name: user.name,
+                      address: user.address,
+                      age: user.age
+                    }])
+                  }}>Edit</button>
+                  <button type="button" className="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" onClick={() => dispatch(deleteUser(user.id))}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+    </>
+  )
+}
+
+export default App
+
+userSlice.js :-
+
+import { createSlice } from "@reduxjs/toolkit";
+
+const userSlice = createSlice({
+  name: "users",
+  initialState: [],
+  reducers: {
+    addUser: (state, action) => {
+      const newUser = {
+        id: Date.now(),
+        ...action.payload,
+    
+      };
+      state.push(newUser);
+    },
+    updateUser: (state, action) => {
+          const{id,data} = action.payload
+      const user = state.find((user) => user.id === id);
+      if (user) {
+        user.name = data.name;
+        user.address = data.address;
+        user.age = data.age;
+      }
+    },
+deleteUser: (state, action) => {
+  console.log("Delete ID:", action.payload)
+  console.log("Current State:", state)
+
+  const index = state.findIndex((user) => user.id === action.payload);
+  console.log("Index Found:", index)
+
+  if (index !== -1) {
+    state.splice(index, 1);
+  }
+},
+  },
+});
+export const { addUser, updateUser, deleteUser } = userSlice.actions;
+export default userSlice.reducer;
+
+
+
+store.js :- 
+
+
+import { configureStore,combineReducers } from "@reduxjs/toolkit";
+import storage from "redux-persist/lib/storage";
+import { persistStore, persistReducer } from "redux-persist";
+import userReducer from './userSlice'
+
+
+const rootReducers  = combineReducers({
+    users:userReducer
+}
+
+)
+
+
+
+const persistConfig = {
+  key: "root",
+  storage,
+};
+
+// const store = configureStore({
+//  reducer: {
+//  users: userReducer,
+//  },
+// });
+
+
+const persistedReducer = persistReducer(persistConfig, rootReducers);
+export const store = configureStore({
+  reducer: persistedReducer,
+  devTools: process.env.NODE_ENV !== "production",
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
+      },
+    }),
+});
+
+
+
+export const persistor = persistStore(store);
+
+
+
+
+
+
+
