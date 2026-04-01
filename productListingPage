@@ -1,0 +1,140 @@
+import React, { useEffect, useState } from "react";
+
+// debounce function
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function ProductList() {
+  const [products, setProducts] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("");
+
+  const [page, setPage] = useState(1);
+  const [cart, setCart] = useState([]);
+
+  const ITEMS_PER_PAGE = 5;
+
+  // Fetch API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("https://fakestoreapi.com/products");
+        const data = await res.json();
+        setProducts(data);
+        setFiltered(data);
+      } catch (err) {
+        setError("Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Apply filters
+  useEffect(() => {
+    let temp = [...products];
+
+    // Search
+    if (search) {
+      temp = temp.filter((p) =>
+        p.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Category
+    if (category !== "all") {
+      temp = temp.filter((p) => p.category === category);
+    }
+
+    // Sort
+    if (sort === "low") {
+      temp.sort((a, b) => a.price - b.price);
+    } else if (sort === "high") {
+      temp.sort((a, b) => b.price - a.price);
+    }
+
+    setFiltered(temp);
+    setPage(1);
+  }, [search, category, sort, products]);
+
+  // Debounced search
+  const handleSearch = debounce((value) => {
+    setSearch(value);
+  }, 500);
+
+  // Pagination
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
+
+  // Add to cart
+  const addToCart = (product) => {
+    setCart([...cart, product]);
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
+
+  return (
+    <div>
+      {/* Search */}
+      <input
+        placeholder="Search products"
+        onChange={(e) => handleSearch(e.target.value)}
+      />
+
+      {/* Filter */}
+      <select onChange={(e) => setCategory(e.target.value)}>
+        <option value="all">All</option>
+        <option value="men's clothing">Men</option>
+        <option value="women's clothing">Women</option>
+        <option value="electronics">Electronics</option>
+      </select>
+
+      {/* Sort */}
+      <select onChange={(e) => setSort(e.target.value)}>
+        <option value="">Sort</option>
+        <option value="low">Price Low to High</option>
+        <option value="high">Price High to Low</option>
+      </select>
+
+      <h3>Cart: {cart.length}</h3>
+
+      {/* Product List */}
+      <div>
+        {paginated.map((p) => (
+          <div key={p.id} style={{ border: "1px solid #ccc", margin: 10 }}>
+            <h4>{p.title}</h4>
+            <p>₹{p.price}</p>
+            <button onClick={() => addToCart(p)}>Add to Cart</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+        Prev
+      </button>
+      <button
+        disabled={start + ITEMS_PER_PAGE >= filtered.length}
+        onClick={() => setPage(page + 1)}
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
+export default ProductList;
