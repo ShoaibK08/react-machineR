@@ -41,3 +41,68 @@ const filteredUsers = usersData.filter((user)=>(
 }
 
 export default App
+
+
+WITH API calll :- 
+
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import useDebounce from "./useDebounce";
+
+function App() {
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const debouncedSearchTerm = useDebounce(search, 500);
+
+  // ✅ API function outside useEffect
+  const fetchUsers = async (searchValue) => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(
+        "https://jsonplaceholder.typicode.com/users"
+      );
+
+      const filtered = res.data.filter((user) =>
+        user.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+
+      setUsers(filtered);
+    } catch (error) {
+      console.log("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ useEffect only triggers function
+  useEffect(() => {
+    fetchUsers(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search user"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {users.map((user) => (
+            <li key={user.id}>{user.name}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default App;
