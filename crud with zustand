@@ -16,18 +16,28 @@ function App() {
 
   //const debouncedSearchTerm = useDebounce(searchTerm, 500)
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState([{
     name: '',
     address: '',
     age: ''
-  })
+  }])
 
-  const handleChange = (e) => {
-    setFormData({
+  const handleChange = (index, e) => {
+    const updatedForm = [...formData]
+    updatedForm[index][e.target.name] = e.target.value
+    setFormData(updatedForm)
+  }
+
+  const handleAddMore = () => {
+    setFormData([
       ...formData,
-      [e.target.name]: e.target.value
+      { name: '', address: '', age: '' }
+    ])
+  }
 
-    })
+  const handleRemoveField = (index) => {
+    const updatedForm = formData.filter((_, i) => i !== index)
+    setFormData(updatedForm)
   }
 
 
@@ -39,18 +49,18 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (editID) {
-      updateUser(editID, formData)
+      updateUser(editID, formData[0])
       setEditId(null)
     }
     else {
-      addUser(formData)
+      formData.forEach((user) => addUser(user))
     }
 
-    setFormData({
+    setFormData([{
       name: '',
       address: '',
       age: ''
-    })
+    }])
   }
 
 
@@ -66,20 +76,33 @@ function App() {
     <>
       <div>
         <form className="max-w-sm mx-auto mt-6" onSubmit={handleSubmit}>
-          <div className="mb-5">
-            <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your name</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} id="text" className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="enter name" required />
-          </div>
-          <div className="mb-5">
-            <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your Address</label>
-            <input type="text" name="address" value={formData.address} onChange={handleChange} id="text" className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="address" required />
-          </div>
+          {formData.map((item, index) => {
+            return (
+              <div key={index}>
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your name</label>
+                  <input type="text" name="name" value={item.name} onChange={(e) => handleChange(index, e)} id={`name-${index}`} className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="enter name" required />
+                </div>
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your Address</label>
+                  <input type="text" name="address" value={item.address} onChange={(e) => handleChange(index, e)} id={`address-${index}`} className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="address" required />
+                </div>
 
-          <div className="mb-5">
-            <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your age</label>
-            <input type="number" name="age" value={formData.age} onChange={handleChange} id="text" className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Enter age" required />
-          </div>
+                <div className="mb-5">
+                  <label htmlFor="text" className="block mb-2.5 text-sm font-medium text-heading">Your age</label>
+                  <input type="number" name="age" value={item.age} onChange={(e) => handleChange(index, e)} id={`age-${index}`} className="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body" placeholder="Enter age" required />
+                </div>
+              </div>
+            )
+          })}
 
+          <button
+            type="button"
+            className="bg-gray-600 text-white px-4 py-2 rounded mr-2"
+            onClick={handleAddMore}
+          >
+            + Add More
+          </button>
           <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">{editID ? "Update" : "Submit"}</button>
         </form>
       </div>
@@ -127,11 +150,11 @@ function App() {
                 <td className="px-6 py-4">
                   <button type="button" className="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" onClick={() => {
                     setEditId(user.id)
-                    setFormData({
+                    setFormData([{
                       name: user.name,
                       address: user.address,
                       age: user.age
-                    })
+                    }])
                   }}>Edit</button>
                   <button type="button" className="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none" onClick={() => deleteUser(user.id)}>Delete</button>
                 </td>
@@ -151,16 +174,20 @@ export default App
 
 store.js file :-
 
-
 import { create } from 'zustand'
-import { persist, } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
+
+// Unique ID generator
+const generateId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
 
 export const useUserStore = create()(
   persist(
     (set) => ({
       users: [],
       addUser: (user)=> set((state)=>({
-        users:[...state.users,{...user,id: Date.now()}]
+        users:[...state.users,{...user,id: generateId()}]
       })),
       updateUser:(id, updatedData)=> set((state)=>({
         users: state.users.map((user)=>
@@ -176,9 +203,3 @@ export const useUserStore = create()(
     }
   ),
 )
-
-
-
-
-
-
