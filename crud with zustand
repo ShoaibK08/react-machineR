@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useUserStore } from "./store";
-import useDebounce from "./useDebounce";
+// import useDebounce from "./useDebounce";
 
 function App() {
   const users = useUserStore((state) => state.users)
@@ -14,7 +14,7 @@ function App() {
 
   const [searchTerm, setSearchTerm] = useState('')
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500)
+  //const debouncedSearchTerm = useDebounce(searchTerm, 500)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -54,11 +54,11 @@ function App() {
   }
 
 
-  const filteredUsers = users.filter(user =>
- user.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())||
-    user.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    user.age.toString().includes(debouncedSearchTerm)
-  );
+//   const filteredUsers = users.filter(user =>
+//  user.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())||
+//     user.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+//     user.age.toString().includes(debouncedSearchTerm)
+//   );
 
 
 
@@ -112,7 +112,7 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <tr className="odd:bg-neutral-primary even:bg-neutral-secondary-soft" key={user.id}>
                 <th scope="row" className="px-6 py-4 font-medium text-heading whitespace-nowrap">
                   {user.name}
@@ -146,6 +146,7 @@ function App() {
 }
 
 export default App
+
 
 
 store.js file :-
